@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -20,60 +21,39 @@ import com.badlogic.gdx.utils.Array;
  * on {2020/3/27} {10:40}
  * desctapion:
  */
-public abstract class AbsActor extends Actor {
+public abstract class AbsActor extends Table {
 
     private StateManager.AbsActorState state = StateManager.AbsActorState.alive;
+    private StateManager.BTType btType = StateManager.BTType.clear;
     private ActionsOver actionsOver;
+    private AbsActor otherActor;
+    //    private int index;
     Texture texture;
-    int x,y;
+    int x, y;
     int id;
-    public AbsActor(Stage stage, int x, int y, int w, int h) {
-//        stage.addActor(this);
+
+    public AbsActor() {
 
         int actorBlood = getActorBlood();
         String actorName = getActorName();
-        this.x=x;
-        this.y=y;
-
-        setBounds(x, y, w, h);
-
-//        Pixmap pixmap = new Pixmap(w, h, Pixmap.Format.RGBA8888);
-//        pixmap.setColor(1, 0.5f, 1, 1);
-//        pixmap.fillRectangle(0, 0, w, h);
 
         BitmapFont bitmapFont = new BitmapFont();
-        Label blood = new Label(actorBlood+"",new Label.LabelStyle(bitmapFont, Color.PINK));
-//        blood.setDebug(true);
-//        blood.setWidth(w);
-//        blood.setHeight(h/3);
+        Label blood = new Label(actorBlood + "", new Label.LabelStyle(bitmapFont, Color.PINK));
+        blood.setFontScale(2);
+        Label name = new Label(actorName, new Label.LabelStyle(bitmapFont, Color.WHITE));
+        name.setFontScale(2);
 
-        Label name = new Label(actorName,new Label.LabelStyle(bitmapFont, Color.WHITE));
-//        Label label = new Label("xx",new Label.LabelStyle(new BitmapFont(), Color.PINK));
-//        name.setDebug(true);
-        Table table = new Table();
-        table.setBounds(x,y,w,h);
+        top();
+        add(blood).expand();
 
-        table.top();
-        table.add(blood).expand();
-
-        table.row().expand();
-        table.add(name);
-        table.setDebug(true);
+        row().expand();
+        add(name);
+        setDebug(true);
 
 
-        stage.addActor(table);
-
-
-
-
-//        texture = new Texture(pixmap, Pixmap.Format.RGBA8888, false);
-        this.actionsOver = actionsOver;
-//        if(id==5){
-//            doActions();
-//        }
-
-//        doActions();
     }
+
+//    protected abstract int getIndex();
 
 
     protected abstract String getActorName();
@@ -84,29 +64,50 @@ public abstract class AbsActor extends Actor {
         this.state = state;
     }
 
-    @Override
-    public void draw(Batch batch, float parentAlpha) {
-        batch.draw(texture, getX(), getY());
+    private void setBtType(StateManager.BTType btType) {
+        this.btType = btType;
     }
 
-    boolean addOnceActions = true;
+//    @Override
+//    public void draw(Batch batch, float parentAlpha) {
+//        batch.draw(texture, getX(), getY());
+//    }
 
-    public void setFlag(boolean flag) {
-        this.addOnceActions = flag;
+    //    boolean addOnceActions = true;
+//
+//    public void setFlag(boolean flag) {
+//        this.addOnceActions = flag;
+//    }
+
+    public void attack(AbsActor otherActor) {
+        this.otherActor = otherActor;
+
+        this.setBtType(StateManager.BTType.attack);
+        otherActor.setBtType(StateManager.BTType.defence);
     }
 
     @Override
     public void act(float delta) {
         super.act(delta);
-        if(addOnceActions) {
-            if (state == StateManager.AbsActorState.alive) {
-                Array<Action> actions = getActions();
-                if ((actions == null || actions.size == 0)) {
-                    System.out.println("xx  act");
-//                    if (actionsOver != null) actionsOver.actionOver(delta);
-                    addOnceActions = false;
-                }
+
+        if (btType == StateManager.BTType.attack) {
+            addActions();
+//            btType = StateManager.BTType.clear;
+        }
+        if (btType == StateManager.BTType.defence) {
+            btType = StateManager.BTType.clear;
+        }
+
+
+        if (state == StateManager.AbsActorState.alive) {
+            Array<Action> actions = getActions();
+            if ((actions == null || actions.size == 0)) {
+                btType = StateManager.BTType.clear;
             }
+        }
+
+        if (state == StateManager.AbsActorState.die) {
+            setVisible(false);
         }
     }
 
@@ -115,12 +116,11 @@ public abstract class AbsActor extends Actor {
     }
 
 
-    public AbsActor doActions(){
-        MoveToAction moveToAction = Actions.moveTo(400, 400, 1f);
-        MoveToAction moveToAction2 = Actions.moveTo(x, y, 1f);
+    public AbsActor addActions() {
+        MoveToAction moveToAction = Actions.moveTo(otherActor.getX() - getWidth(), otherActor.getY(), 1f, Interpolation.elastic);
+        MoveToAction moveToAction2 = Actions.moveTo(getX(), getY(), 0.8f);
         SequenceAction sequence = Actions.sequence(moveToAction, moveToAction2);
         addAction(sequence);
-//        sequence.setActor(this);
         return this;
     }
 }

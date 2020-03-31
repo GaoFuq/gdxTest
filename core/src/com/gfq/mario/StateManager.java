@@ -14,4 +14,8 @@ public class StateManager {
     public enum BT_UI_State{
         playerTurn,enemyTurn
     }
+
+    public enum BTType{
+        attack,defence,clear
+    }
 }

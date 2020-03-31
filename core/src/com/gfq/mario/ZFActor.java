@@ -8,9 +8,6 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
  * desctapion:
  */
 public class ZFActor extends AbsActor {
-    public ZFActor(Stage stage, int x, int y, int w, int h) {
-        super(stage, x, y, w, h);
-    }
 
     @Override
     protected String getActorName() {
